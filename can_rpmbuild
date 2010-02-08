@@ -15,7 +15,9 @@ my $format   = q(--queryformat='%{name}~%{version}~%{vendor}');
 
 my (@ok, @errs);
 
-foreach (@{$s->requires}) {
+my %req = map { $_ => 1 } (@{$s->requires}, @{$s->buildrequires});
+
+foreach (sort keys %req) {
   my ($cap, $op, $ver) = split;
 
   my $err;
@@ -50,18 +52,18 @@ foreach (@{$s->requires}) {
   my $repo_out = run_cmd("$repo_cmd $format '$cap'");
   $repo_out =~ s/\|\|//;
 
-  unless ($repo_out) {
-    $err->{diy} = 1;
-    next;
-  }
+  if ($repo_out) {
 
-  my ($repo_name, $repo_ver, $repo_vend) = split  /~/, $repo_out;
+    my ($repo_name, $repo_ver, $repo_vend) = split  /~/, $repo_out;
 
-  $err->{ava_rpm} = $repo_name;
-  $err->{ava_ver} = $repo_ver;
-  $err->{ava_vnd} = $repo_vend;
+    $err->{ava_rpm} = $repo_name;
+    $err->{ava_ver} = $repo_ver;
+    $err->{ava_vnd} = $repo_vend;
 
-  if (defined $ver and $ver > $repo_ver) {
+    if (defined $ver and $ver > $repo_ver) {
+      $err->{diy} = 1;
+    }
+  } else {
     $err->{diy} = 1;
   }
 
@@ -74,7 +76,10 @@ unless (@errs) {
   print "The following dependencies are missing:\n";
   foreach (@errs) {
     print $_->{cap}, "\n";
-    print "You need $_->{ver_req} of $_->{rpm}.\n";
+    print 'You need ';
+    print "$_->{ver_req} of " if $_->{ver_req};
+    print "$_->{cap}.\n";
+    print "You have $_->{ver_cur}\n" if $_->{ver_cur};
     if ($_->{diy}) {
       print "You'll have to build it yourself\n";
       if ($_->{ava_name}) {
