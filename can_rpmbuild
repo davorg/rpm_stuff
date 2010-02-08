@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Parse::RPM::Spec;
+
+my $spec = shift || die "No spec given\n";
+
+my $s = Parse::RPM::Spec->new({ file => $spec });
+
+my $rpm_cmd  = 'rpm -q --whatprovides';
+my $repo_cmd = 'repoquery -C --whatprovides';
+my $format   = q(--queryformat='%{name}~%{version}~%{vendor}');
+
+my (@ok, @errs);
+
+foreach (@{$s->requires}) {
+  my ($cap, $op, $ver) = split;
+
+  my $err;
+  $err->{cap} = $cap;
+
+  next if $cap =~ /COMPAT/;
+
+  my $rpm_out = run_cmd("$rpm_cmd $format '$cap'");
+
+  if ($rpm_out =~ /no package provides/i) {
+    $err->{not_installed} = 1;
+    $err->{ver_req} = $ver;
+  } else {
+    my ($rpm_name, $rpm_ver, $rpm_vend) = split /~/, $rpm_out;
+
+    if (defined $ver) {
+      if ($rpm_ver < $ver) {
+	$err->{rpm} = $rpm_name;
+	$err->{vnd_cur} = $rpm_vend;
+	$err->{ver_cur} = $rpm_ver;
+	$err->{ver_req} = $ver;
+      } else {
+	push @ok, $cap;
+	next;
+      }
+    } else {
+      push @ok, $cap;
+      next;
+    }
+  }
+
+  my $repo_out = run_cmd("$repo_cmd $format '$cap'");
+  $repo_out =~ s/\|\|//;
+
+  unless ($repo_out) {
+    $err->{diy} = 1;
+    next;
+  }
+
+  my ($repo_name, $repo_ver, $repo_vend) = split  /~/, $repo_out;
+
+  $err->{ava_rpm} = $repo_name;
+  $err->{ava_ver} = $repo_ver;
+  $err->{ava_vnd} = $repo_vend;
+
+  if (defined $ver and $ver > $repo_ver) {
+    $err->{diy} = 1;
+  }
+
+  push @errs, $err;
+}
+
+unless (@errs) {
+  print "All dependencies satisfied\n";
+} else {
+  print "The following dependencies are missing:\n";
+  foreach (@errs) {
+    print $_->{cap}, "\n";
+    print "You need $_->{ver_req} of $_->{rpm}.\n";
+    if ($_->{diy}) {
+      print "You'll have to build it yourself\n";
+      if ($_->{ava_name}) {
+	print "The most recent version available is $_->{ava_ver}\n";
+	print "from $_->{ava_vnd}.\n";
+      }
+    } else {
+      print "You can get $_->{ava_rpm} version $_->{ava_ver} ",
+	"from $_->{ava_vnd}\n";
+    }
+    print "\n";
+  }
+}
+
+sub run_cmd {
+  my $cmd = shift;
+
+  # print "[$cmd]\n";
+
+  chomp (my $output = `$cmd`);
+
+  return $output;
+}
