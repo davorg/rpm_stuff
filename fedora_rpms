@@ -10,7 +10,8 @@ my $packfile = '/home/dave/cpan/modules/02packages.details.txt.gz';
 my $cmd = q(repoquery --repoid=REPO ) .
           q(--qf="%{name},%{version},%{vendor},%{repoid}" 'perl-*');
 
-my @repos = qw(fedora updates magnum livna);
+my @repos = qw(fedora updates magnum rpmfusion-free rpmfusion-nonfree
+               rpmfusion-free-updates rpmfusion-nonfree-updates livna);
 my @cols = qw(name version vendor repo);
 
 open my $csv, '>', 'fedora_perl.csv' or die $!;
