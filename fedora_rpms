@@ -22,8 +22,6 @@ my @repos = qw(fedora updates magnum rpmfusion-free rpmfusion-nonfree
                rpmfusion-free-updates rpmfusion-nonfree-updates livna);
 my @cols = qw(name version vendor repo);
 
-open my $csv, '>', 'fedora_perl.csv' or die $!;
-
 my $rpm;
 
 foreach my $r (@repos) {
@@ -41,8 +39,8 @@ foreach my $r (@repos) {
 
 my $p = Parse::CPAN::Packages->new($packfile);
 
-print $csv 'Distribution name,cpan,', join ',', @repos;
-print $csv "\n";
+print 'Distribution name,cpan,', join ',', @repos;
+print "\n";
 
 foreach (sort keys %$rpm) {
   my $distname = $_;
@@ -64,6 +62,5 @@ foreach (sort keys %$rpm) {
     }
   }
 
-  print $csv join(',', @out);
-  print $csv "\n";
+  print join(',', @out), "\n";
 }
