@@ -7,6 +7,14 @@ use Parse::CPAN::Packages;
 
 my $packfile = '/home/dave/cpan/modules/02packages.details.txt.gz';
 
+unless (-f $packfile) {
+  require LWP::Simple;
+
+  warn "Downloading 02packages\n";
+  LWP::Simple::getstore('http://www.cpan.org/modules/02packages.txt.gz',
+                        $packfile);
+};
+
 my $cmd = q(repoquery --repoid=REPO ) .
           q(--qf="%{name},%{version},%{vendor},%{repoid}" 'perl-*');
 
