@@ -3,9 +3,15 @@
 use strict;
 use warnings;
 
+use Getopt::Std;
 use Parse::CPAN::Packages;
 
-my $packfile = '/home/dave/cpan/modules/02packages.details.txt.gz';
+my %opts;
+
+getopts('p:d:', \%opts);
+
+my $packfile = $opts{p}
+  ||'/home/dave/cpan/modules/02packages.details.txt.gz';
 
 unless (-f $packfile) {
   require LWP::Simple;
@@ -18,8 +24,19 @@ unless (-f $packfile) {
 my $cmd = q(repoquery --repoid=REPO ) .
           q(--qf="%{name},%{version},%{vendor},%{repoid}" 'perl-*');
 
-my @repos = qw(fedora updates magnum rpmfusion-free rpmfusion-nonfree
-               rpmfusion-free-updates rpmfusion-nonfree-updates livna);
+my %repos = (
+	     fedora => [ qw(fedora updates magnum rpmfusion-free
+			    rpmfusion-nonfree rpmfusion-free-updates
+			    rpmfusion-nonfree-updates livna) ],
+	     centos => [ qw(base updates epel magnum rpmforge) ],
+    );
+
+my $dist = $opts{d} || 'fedora';
+
+die "$dist is an unknown distribution\n" unless exists $repos{$dist};
+
+my @repos = @{ $repos{$dist} };
+
 my @cols = qw(name version vendor repo);
 
 my $rpm;
