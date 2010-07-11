@@ -8,7 +8,7 @@ use Parse::CPAN::Packages;
 
 my %opts;
 
-getopts('p:d:', \%opts);
+getopts('p:d:r:', \%opts);
 
 my $packfile = $opts{p}
   ||'/home/dave/cpan/modules/02packages.details.txt.gz';
@@ -29,13 +29,26 @@ my %repos = (
 			    rpmfusion-nonfree rpmfusion-free-updates
 			    rpmfusion-nonfree-updates livna) ],
 	     centos => [ qw(base updates epel magnum rpmforge) ],
-    );
+	    );
 
-my $dist = $opts{d} || 'fedora';
+my $dist = $opts{d};
+
+unless ($dist) {
+  open my $rel, '<', '/etc/redhat-release' or
+    die "Can't open redhat-release: $!\n";
+  ($dist) = <$rel> =~ /^(\w+)/;
+  $dist = lc $dist;
+}
 
 die "$dist is an unknown distribution\n" unless exists $repos{$dist};
 
-my @repos = @{ $repos{$dist} };
+my @repos;
+
+if ($opts{r}) {
+  @repos = split /,/, $opts{r};
+} else {
+  @repos = @{ $repos{$dist} };
+}
 
 my @cols = qw(name version vendor repo);
 
