@@ -11,7 +11,8 @@ my %opts;
 getopts('p:d:r:', \%opts);
 
 my $packfile = $opts{p}
-  ||'/home/dave/cpan/modules/02packages.details.txt.gz';
+  || $ENV{CPAN_PACKFILE}
+  || '/home/dave/cpan/modules/02packages.details.txt.gz';
 
 unless (-f $packfile) {
   require LWP::Simple;
