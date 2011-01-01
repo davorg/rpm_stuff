@@ -18,7 +18,7 @@ unless (-f $packfile) {
   require LWP::Simple;
 
   warn "Downloading 02packages\n";
-  LWP::Simple::getstore('http://www.cpan.org/modules/02packages.txt.gz',
+  LWP::Simple::getstore('http://www.cpan.org/modules/02packages.details.txt.gz',
                         $packfile);
 };
 
