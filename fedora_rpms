@@ -14,9 +14,15 @@ my @repos = qw(fedora updates magnum rpmfusion-free rpmfusion-nonfree
                rpmfusion-free-updates rpmfusion-nonfree-updates livna);
 my @cols = qw(name version vendor repo);
 
+if (@ARGV) {
+  @repos = @ARGV;
+}
+
 open my $csv, '>', 'fedora_perl.csv' or die $!;
 
 my $rpm;
+
+my %xlate = (' http://dag.wieers.com/apt/' => 'rpmforge');
 
 foreach my $r (@repos) {
   my $exec = $cmd;
@@ -26,6 +32,10 @@ foreach my $r (@repos) {
     chomp;
     my %rec;
     @rec{@cols} = split /,/;
+
+    if (exists $xlate{$rec{repo}}) {
+      $rec{repo} = $xlate{$rec{repo}};
+    }
 
     $rpm->{$rec{name}}{$rec{repo}} = $rec{version};
   }
