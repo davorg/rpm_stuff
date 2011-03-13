@@ -3,22 +3,55 @@
 use strict;
 use warnings;
 
+use Getopt::Std;
 use Parse::CPAN::Packages;
 
-my $packfile = '/home/dave/cpan/modules/02packages.details.txt.gz';
+my %opts;
+
+getopts('p:d:r:', \%opts);
+
+my $packfile = $opts{p}
+  || $ENV{CPAN_PACKFILE}
+  || '/home/dave/cpan/modules/02packages.details.txt.gz';
+
+unless (-f $packfile) {
+  require LWP::Simple;
+
+  warn "Downloading 02packages\n";
+  LWP::Simple::getstore('http://www.cpan.org/modules/02packages.details.txt.gz',
+                        $packfile);
+};
 
 my $cmd = q(repoquery --repoid=REPO ) .
           q(--qf="%{name},%{version},%{vendor},%{repoid}" 'perl-*');
 
-my @repos = qw(fedora updates magnum rpmfusion-free rpmfusion-nonfree
-               rpmfusion-free-updates rpmfusion-nonfree-updates livna);
-my @cols = qw(name version vendor repo);
+my %repos = (
+	     fedora => [ qw(fedora updates magnum rpmfusion-free
+			    rpmfusion-nonfree rpmfusion-free-updates
+			    rpmfusion-nonfree-updates livna) ],
+	     centos => [ qw(base updates epel magnum rpmforge) ],
+	    );
 
-if (@ARGV) {
-  @repos = @ARGV;
+my $dist = $opts{d};
+
+unless ($dist) {
+  open my $rel, '<', '/etc/redhat-release' or
+    die "Can't open redhat-release: $!\n";
+  ($dist) = <$rel> =~ /^(\w+)/;
+  $dist = lc $dist;
 }
 
-open my $csv, '>', 'fedora_perl.csv' or die $!;
+die "$dist is an unknown distribution\n" unless exists $repos{$dist};
+
+my @repos;
+
+if ($opts{r}) {
+  @repos = split /,/, $opts{r};
+} else {
+  @repos = @{ $repos{$dist} };
+}
+
+my @cols = qw(name version vendor repo);
 
 my $rpm;
 
@@ -43,8 +76,8 @@ foreach my $r (@repos) {
 
 my $p = Parse::CPAN::Packages->new($packfile);
 
-print $csv 'Distribution name,cpan,', join ',', @repos;
-print $csv "\n";
+print 'Distribution name,cpan,', join ',', @repos;
+print "\n";
 
 foreach (sort keys %$rpm) {
   my $distname = $_;
@@ -66,6 +99,5 @@ foreach (sort keys %$rpm) {
     }
   }
 
-  print $csv join(',', @out);
-  print $csv "\n";
+  print join(',', @out), "\n";
 }
