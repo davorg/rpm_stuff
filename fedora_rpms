@@ -28,7 +28,7 @@ my $cmd = q(repoquery --repoid=REPO ) .
 my %repos = (
 	     fedora => [ qw(fedora updates magnum rpmfusion-free
 			    rpmfusion-nonfree rpmfusion-free-updates
-			    rpmfusion-nonfree-updates livna) ],
+			    rpmfusion-nonfree-updates) ],
 	     centos => [ qw(base updates epel magnum rpmforge) ],
 	    );
 
