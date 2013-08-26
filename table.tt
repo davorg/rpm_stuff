@@ -1,23 +1,42 @@
 <html>
   <head>
     <title>RPMs for [% dist %]</title>
+    <link href="http://rpm.mag-sol.com/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="http://rpm.mag-sol.com/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="http://rpm.mag-sol.com/bootstrap/css/docs.css" rel="stylesheet">
+    <link href="http://rpm.mag-sol.com/bootstrap/js/google-code-prettify/prettify.css" rel="stylesheet">
   <head>
   <body>
-    <h1>RPMs for [% dist %]</h1>
-    <table>
-      <tr>
-        <th>Distribution</th>
+    <div class="container-fluid">
+      <div class="span2">
+        <ul class="nav nav-list">
+          <li class="nav-header">Navigation</li>
+          <li><a href="http://mag-sol.com/"><i class="icon-home"></i>Home</a></li>
+        </ul>
+      </div>
+      <div class="span9">
+        <div class="page-header">
+          <h1>Magnum Solutions CPAN RPM Repository</h1>
+          <h2>RPMs for [% dist %]</h2>
+        </div>
+        <div class="row-fluid">
+          <table class=".table">
+            <tr>
+              <th>Distribution</th>
 [% FOREACH repo IN repos -%]
-        <th>[% repo %]</th>
+              <th>[% repo %]</th>
 [% END -%]
-      </tr>
+            </tr>
 [% FOREACH row IN table -%]
-      <tr>
+            <tr>
 [%   FOREACH cell IN row -%]
-        <td>[% cell %]</td>
+              <td>[% cell %]</td>
 [%   END -%]
-      </tr>
+            </tr>
 [% END -%]
-    </table>
+          </table>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
