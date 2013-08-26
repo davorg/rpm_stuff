@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Std;
+use Parse::CPAN::Packages;
+use Template;
+
+my %opts;
+
+getopts('p:d:r:', \%opts);
+
+my $packfile = $opts{p}
+  || $ENV{CPAN_PACKFILE}
+  || '/home/dave/cpan/modules/02packages.details.txt.gz';
+
+unless (-f $packfile) {
+  require LWP::Simple;
+
+  warn "Downloading 02packages\n";
+  LWP::Simple::getstore('http://www.cpan.org/modules/02packages.details.txt.gz',
+                        $packfile);
+};
+
+my $cmd = q(repoquery --repoid=REPO ) .
+          q(--qf="%{name},%{version},%{vendor},%{repoid}" 'perl-*');
+
+my %repos = (
+	     fedora => [ qw(fedora updates magnum rpmfusion-free
+			    rpmfusion-nonfree rpmfusion-free-updates
+			    rpmfusion-nonfree-updates) ],
+	     centos => [ qw(base updates epel magnum rpmforge) ],
+	    );
+
+my $dist = $opts{d};
+
+unless ($dist) {
+  open my $rel, '<', '/etc/redhat-release' or
+    die "Can't open redhat-release: $!\n";
+  ($dist) = <$rel> =~ /^(\w+)/;
+  $dist = lc $dist;
+}
+
+die "$dist is an unknown distribution\n" unless exists $repos{$dist};
+
+my @repos;
+
+if ($opts{r}) {
+  @repos = split /,/, $opts{r};
+} else {
+  @repos = @{ $repos{$dist} };
+}
+
+my @cols = qw(name version vendor repo);
+
+my $rpm;
+
+my %xlate = (' http://dag.wieers.com/apt/' => 'rpmforge');
+
+foreach my $r (@repos) {
+  my $exec = $cmd;
+  $exec =~ s/REPO/$r/;
+
+  foreach (`$exec`) {
+    chomp;
+    my %rec;
+    @rec{@cols} = split /,/;
+
+    if (exists $xlate{$rec{repo}}) {
+      $rec{repo} = $xlate{$rec{repo}};
+    }
+
+    $rpm->{$rec{name}}{$rec{repo}} = $rec{version};
+  }
+}
+
+my $p = Parse::CPAN::Packages->new($packfile);
+
+#print 'Distribution name,cpan,', join ',', @repos;
+#print "\n";
+
+my @table;
+foreach (sort keys %$rpm) {
+  my $distname = $_;
+  $distname =~ s/^perl-//;
+  my $dist = $p->latest_distribution($distname);
+
+  if ($dist) {
+    $rpm->{$_}{cpan} = $dist->version;
+  }
+
+  my @out;
+  push @out, $_;
+
+  foreach my $r ('cpan', @repos) {
+    if (exists $rpm->{$_}{$r}) {
+       push @out, $rpm->{$_}{$r};
+    } else {
+       push @out, '';
+    }
+  }
+
+  push @table, \@out;
+}
+
+my $t = Template->new;
+$t->process('table.tt', {
+  table => \@table,
+  repos => ['CPAN', @repos],
+  dist  => $dist }, "$dist.html")
+  or die $t->error;

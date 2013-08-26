@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <title>RPMs for [% dist %]</title>
+  <head>
+  <body>
+    <h1>RPMs for [% dist %]</h1>
+    <table>
+      <tr>
+        <th>Distribution</th>
+[% FOREACH repo IN repos -%]
+        <th>[% repo %]</th>
+[% END -%]
+      </tr>
+[% FOREACH row IN table -%]
+      <tr>
+[%   FOREACH cell IN row -%]
+        <td>[% cell %]</td>
+[%   END -%]
+      </tr>
+[% END -%]
+    </table>
+  </body>
+</html>
