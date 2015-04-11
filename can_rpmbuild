@@ -35,13 +35,13 @@ foreach (sort keys %req) {
 
     if (defined $ver) {
       if ($rpm_ver < $ver) {
-	$err->{rpm} = $rpm_name;
-	$err->{vnd_cur} = $rpm_vend;
-	$err->{ver_cur} = $rpm_ver;
-	$err->{ver_req} = $ver;
+        $err->{rpm} = $rpm_name;
+        $err->{vnd_cur} = $rpm_vend;
+        $err->{ver_cur} = $rpm_ver;
+        $err->{ver_req} = $ver;
       } else {
-	push @ok, $cap;
-	next;
+        push @ok, $cap;
+        next;
       }
     } else {
       push @ok, $cap;
@@ -83,12 +83,12 @@ unless (@errs) {
     if ($_->{diy}) {
       print "You'll have to build it yourself\n";
       if ($_->{ava_name}) {
-	print "The most recent version available is $_->{ava_ver}\n";
-	print "from $_->{ava_vnd}.\n";
+        print "The most recent version available is $_->{ava_ver}\n";
+        print "from $_->{ava_vnd}.\n";
       }
     } else {
       print "You can get $_->{ava_rpm} version $_->{ava_ver} ",
-	"from $_->{ava_vnd}\n";
+            "from $_->{ava_vnd}\n";
     }
     print "\n";
   }
